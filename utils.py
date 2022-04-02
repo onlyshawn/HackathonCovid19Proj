@@ -77,7 +77,7 @@ def make_directory(keys):
 def metric(mode, output, labels, cls=None):
     #print(X)
 
-    # 测量各种指标
+    # different modes
     if mode=='acc':
 
         all_preds=np.argmax(output.detach().cpu().numpy(), 1)
