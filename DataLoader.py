@@ -9,7 +9,7 @@ import scipy
 from PIL import Image
 import skimage.measure
 
-nib.Nifti1Header.quaternion_threshold = - np.finfo(np.float32).eps * 10  # 松弛一下限制
+nib.Nifti1Header.quaternion_threshold = - np.finfo(np.float32).eps * 10  # 
 training_data_path = "CT-0"
 preserving_ratio = 0.25 # filter out 2d images containing < 25% non-zeros
 
