@@ -212,7 +212,7 @@ def test(model, loader, out_f, out_f_all_acc, out_f_ad, best_mcc, args):
             input = input.cuda()
             target_test = target_test.cuda()
 
-        o1, _, o2 = model(input)
+        o1 = model(input)
 
         output.extend(o1.cpu().detach().numpy())
         labels_test.extend(target_test.cpu().detach().numpy())
