@@ -92,7 +92,7 @@ def createTrainTestData(test_split=0.04, val_split=0.20, seed = 1997
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
-    # 训练模式
+    # train mode
     model.train()
 
     end=time.time()
@@ -135,7 +135,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
 def validate(train_loader, model, criterion, epoch, args, best_acc):
 
-    # 评估模式，模型不再更新参数
+    # eval mode
     model.eval()
     all_preds = []
     all_targets = []
@@ -179,7 +179,7 @@ def validate(train_loader, model, criterion, epoch, args, best_acc):
                 #print(output)
 
 
-        # 获得预测中为0元素的索引
+        # 
         for key in index_pred.keys():
 
             index_pred[key] = np.argwhere(np.array(all_preds)==dic[key]).squeeze(1).tolist()
@@ -251,7 +251,7 @@ if __name__ == '__main__':
     # Specify the used GPU
     # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-    # 参数定义
+    # parameters definition
     parser = argparse.ArgumentParser(description='Baseline model for COVID19')
     parser.add_argument('--model_arch', default="ResNet", type=str, help='the architecture of model')
     parser.add_argument('--loss_type', default="Normal", type=str, help='loss type')
@@ -282,7 +282,7 @@ if __name__ == '__main__':
         torch.manual_seed(args.seed)
         cudnn.deterministic = True
 
-    # 创建模型
+    # create the model
     print("Creating the model……")
     if (args.model_arch=="ResNet"):
         model = resnet18(pretrained=False, b_RGB=False)
@@ -294,10 +294,10 @@ if __name__ == '__main__':
         # DataParallel will divide and allocate batch_size to all available GPUs
         model = torch.nn.DataParallel(model).cuda()
 
-    # 创建存放log的文件夹
+    # build up log directory
     make_directory(dic.keys())
 
-    # 加载数据
+    # load data
     print('Loading data...')
     train_set, val_set, test_set, cls_num_list = createTrainTestData()
     X_train, Y_train = train_set
@@ -338,7 +338,7 @@ if __name__ == '__main__':
 
     best_acc = 0.0
     best_mcc = 0.0
-    # 开始训练
+    # begin training
     for epoch in range(args.epochs):
 
         if args.train_rule == 'None':
@@ -366,10 +366,8 @@ if __name__ == '__main__':
             per_cls_weights = per_cls_weights / np.sum(per_cls_weights) * len(cls_num_list)
             per_cls_weights = torch.FloatTensor(per_cls_weights).cuda(args.gpu)
 
-        # 定义损失函数
+        # loss function
         if args.loss_type == 'LDAM':
-            # 给的几个参数：
-            # 每个列的sample数量， 每个列的权重，max_m，以及s
             criterion = LDAMLoss(cls_num_list=cls_num_list, max_m=0.3, s=150, weight=per_cls_weights).cuda(args.gpu)
         elif args.loss_type == 'LDAM_CB':
             criterion = LDAMLoss_CB(cls_num_list=cls_num_list, max_m=0.3, s=150).cuda(args.gpu)
