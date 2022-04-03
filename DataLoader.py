@@ -86,11 +86,11 @@ def loadRawData():
 def process_image(img, min_side):
     size = img.shape
     h, w = size[0], size[1]
-    #长边缩放为min_side
+    # rescale the minside
     scale = max(w, h) / float(min_side)
     new_w, new_h = int(w/scale), int(h/scale)
     resize_img = cv2.resize(img, (new_w, new_h))
-    # 填充至min_side * min_side
+    # minside * minside
     if new_w % 2 != 0 and new_h % 2 == 0:
         top, bottom, left, right = (min_side-new_h)/2, (min_side-new_h)/2, (min_side-new_w)/2 + 1, (min_side-new_w)/2
     elif new_h % 2 != 0 and new_w % 2 == 0:
