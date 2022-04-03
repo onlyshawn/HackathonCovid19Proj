@@ -13,7 +13,7 @@ from model.ResNet import resnet18
 
 dic = {'CT-0': 0, 'CT-1': 1, 'CT-2': 2, 'CT-3': 3}
 rev_dic = {0 : 'CT-0', 1 : 'CT-1', 2 : 'CT-2', 3 : 'CT-3'}
-metric_basic = ['acc', 'F1_score']
+metric_basic = ['acc']
 metric_ad = ['MCC']
 avg = ['micro', 'macro']
 classes = len(dic)
@@ -73,6 +73,12 @@ def createTrainTestData(test_split=0.04, val_split=0.20, seed = 1997
         Y_test = np.load("./cache/Y_test.npy")
         cls_num_list_np = np.load("./cache/cls.npy")
         cls_num_list = cls_num_list_np.tolist()
+
+    state = np.random.get_state()
+    np.random.shuffle(X_train)
+    np.random.set_state(state)
+    np.random.shuffle(Y_train)
+
     X_train = X_train[:, np.newaxis].astype(np.float32);
     X_val = X_val[:, np.newaxis].astype(np.float32);
     X_test = X_test[:, np.newaxis].astype(np.float32);
@@ -179,7 +185,7 @@ def validate(train_loader, model, criterion, epoch, args, best_acc):
                 #print(output)
 
 
-        # 
+        # get index
         for key in index_pred.keys():
 
             index_pred[key] = np.argwhere(np.array(all_preds)==dic[key]).squeeze(1).tolist()
@@ -251,12 +257,12 @@ if __name__ == '__main__':
     # Specify the used GPU
     # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-    # parameters definition
+    # 参数定义
     parser = argparse.ArgumentParser(description='Baseline model for COVID19')
     parser.add_argument('--model_arch', default="ResNet", type=str, help='the architecture of model')
-    parser.add_argument('--loss_type', default="Normal", type=str, help='loss type')
+    parser.add_argument('--loss_type', default="LDAM", type=str, help='loss type')
     parser.add_argument('--train_rule', default="Reweight", type=str, help='train rule')
-    parser.add_argument('--batch_size', default=4, type=int, help='batch size')
+    parser.add_argument('--batch_size', default=32, type=int, help='batch size')
     parser.add_argument('--epochs', default=300, type=int, metavar='N',
                         help='number of total epochs to run')
     parser.add_argument('--lr', '--learning-rate', default=0.0004, type=float,
@@ -294,7 +300,7 @@ if __name__ == '__main__':
         # DataParallel will divide and allocate batch_size to all available GPUs
         model = torch.nn.DataParallel(model).cuda()
 
-    # build up log directory
+    # directory for logging
     make_directory(dic.keys())
 
     # load data
@@ -315,7 +321,7 @@ if __name__ == '__main__':
 
     print("Number of test samples:")
     print(len(X_test))
-    # 定义优化器
+    # define optimizer
 
     optimizer = torch.optim.Adam(model.parameters(), args.lr,
                                  weight_decay=args.weight_decay)
@@ -366,11 +372,13 @@ if __name__ == '__main__':
             per_cls_weights = per_cls_weights / np.sum(per_cls_weights) * len(cls_num_list)
             per_cls_weights = torch.FloatTensor(per_cls_weights).cuda(args.gpu)
 
-        # loss function
+        # define loss function
         if args.loss_type == 'LDAM':
-            criterion = LDAMLoss(cls_num_list=cls_num_list, max_m=0.3, s=150, weight=per_cls_weights).cuda(args.gpu)
+            # LDAM loss para
+            #
+            criterion = LDAMLoss(cls_num_list=cls_num_list, max_m=0.3, s=50, weight=per_cls_weights).cuda(args.gpu)
         elif args.loss_type == 'LDAM_CB':
-            criterion = LDAMLoss_CB(cls_num_list=cls_num_list, max_m=0.3, s=150).cuda(args.gpu)
+            criterion = LDAMLoss_CB(cls_num_list=cls_num_list, max_m=0.3, s=50).cuda(args.gpu)
 
         elif args.loss_type == 'Focal':
             criterion = FocalLoss(gamma=2.0).cuda(args.gpu)
@@ -388,12 +396,12 @@ if __name__ == '__main__':
 
         # test
         model.eval()
-        if((epoch+1)>=10):
+        if((epoch+1)>=50):
             if ((epoch + 1) % 1 == 0):
                 best_mcc = test(model, test_loader, out_f, out_f_all_acc, out_f_ad,
                                                                     best_mcc,
                                                                     args)
-
+        torch.cuda.empty_cache()
         print("================================")
 
     for key in dic.keys():
@@ -403,4 +411,5 @@ if __name__ == '__main__':
 
     for key in out_f_ad.keys():
         out_f_ad[key].close()
+
 
