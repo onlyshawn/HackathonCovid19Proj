@@ -44,7 +44,7 @@ def loadRawData():
     for i in range(len(classNames)):
         for j in range(len(imageFiles[i])):
             # too large, play a demo dataset first
-            tmp = nib.load(imageFiles[i][j]).get_fdata()[:, :, :2]
+            tmp = nib.load(imageFiles[i][j]).get_fdata()[:, :, :10]
 
             layerNum[i].append(tmp.shape[2])
             img_list = []
@@ -86,11 +86,11 @@ def loadRawData():
 def process_image(img, min_side):
     size = img.shape
     h, w = size[0], size[1]
-    # rescale the minside
+    #rescale longest side to min_side
     scale = max(w, h) / float(min_side)
     new_w, new_h = int(w/scale), int(h/scale)
     resize_img = cv2.resize(img, (new_w, new_h))
-    # minside * minside
+    # min_side * min_side
     if new_w % 2 != 0 and new_h % 2 == 0:
         top, bottom, left, right = (min_side-new_h)/2, (min_side-new_h)/2, (min_side-new_w)/2 + 1, (min_side-new_w)/2
     elif new_h % 2 != 0 and new_w % 2 == 0:
@@ -99,7 +99,7 @@ def process_image(img, min_side):
         top, bottom, left, right = (min_side-new_h)/2, (min_side-new_h)/2, (min_side-new_w)/2, (min_side-new_w)/2
     else:
         top, bottom, left, right = (min_side-new_h)/2 + 1, (min_side-new_h)/2, (min_side-new_w)/2 + 1, (min_side-new_w)/2
-    pad_img = cv2.copyMakeBorder(resize_img, int(top), int(bottom), int(left), int(right), cv2.BORDER_CONSTANT, value=[0,0,0]) # 
+    pad_img = cv2.copyMakeBorder(resize_img, int(top), int(bottom), int(left), int(right), cv2.BORDER_CONSTANT, value=[0,0,0]) #
 
     return pad_img
 
