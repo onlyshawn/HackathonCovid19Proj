@@ -396,7 +396,7 @@ if __name__ == '__main__':
 
         # test
         model.eval()
-        if((epoch+1)>=50):
+        if((epoch+1)>=10):
             if ((epoch + 1) % 1 == 0):
                 best_mcc = test(model, test_loader, out_f, out_f_all_acc, out_f_ad,
                                                                     best_mcc,
@@ -411,5 +411,6 @@ if __name__ == '__main__':
 
     for key in out_f_ad.keys():
         out_f_ad[key].close()
+
 
 
