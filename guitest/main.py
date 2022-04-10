@@ -125,7 +125,7 @@ def diagnose():
     img_list = []
     images = [[]]
     for i in range(slices):
-        img_list.append(process_image(ct_img[i],128))
+        img_list.append(process_image(ct_img[:, :, i],128))
     images[0].append(np.array(img_list))#.swapaxes(1,2))
 
     images[0] = concatenate(images[0])
