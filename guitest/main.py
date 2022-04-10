@@ -38,10 +38,14 @@ label.place(x=530, y=0)
 
 # ct
 ct_img = None
+
 # load model
-net = resnet18(pretrained=False, b_RGB=False)
-net.load_state_dict(torch.load('best_ckpt_cnn_60_0.959.pth',map_location=torch.device('cpu')).module.state_dict())
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# net = resnet18(pretrained=False, b_RGB=False)
+net = torch.load('best_ckpt_cnn_60_0.959.pth')#,map_location=torch.device('cpu'))#.module.state_dict())
 # print(net)
+net.to(device)
+net.eval()
 
 
 def clear():
@@ -87,24 +91,25 @@ Use model to diagnose
 """
 def diagnose():
     global ct_img
+    clear()
     slices = ct_img.shape[2]
     diag = np.zeros(4)
     img_set = []
-    for i in range(slices):
+    for i in range(10):
         img_set.append(process_image(ct_img[i],128))
     img_set = np.array(img_set).swapaxes(1,2)
     # print(str(img_set.shape))
 
-    np.random.shuffle(img_set)
+    # np.random.shuffle(img_set)
     img_set = img_set[:,np.newaxis].astype(np.float32)
-    # print("Shape of data: " + str(img_set.shape))
-    loader = torch.utils.data.DataLoader(img_set, batch_size=32, shuffle=True)
+    print("Shape of data: " + str(img_set.shape))
+    loader = torch.utils.data.DataLoader(img_set, batch_size=128)
     output = []
     for i, (img_data) in enumerate(loader):
-
+        img_data = img_data.to(device)
         res = net(img_data)
 
-        output.extend(res.detach().numpy())
+        output.extend(res.cpu().detach().numpy())
 
     output = torch.tensor(np.array(output))
     print(output)
