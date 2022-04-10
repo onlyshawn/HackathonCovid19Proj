@@ -5,7 +5,7 @@ Author: Yinuo Wang
 Date: Apr 8, 2022
 
 """
-# todo: Add pre-trained model in diagnose() function
+
 
 import tkinter
 import tkinter.filedialog
@@ -21,6 +21,8 @@ import torch
 from model.ResNet import resnet18
 from torch.autograd import Variable
 import cv2
+from scipy import ndimage as nd
+
 # create main window
 root = tkinter.Tk()
 root.title('COVID-19 AI Diagnostic system')
@@ -40,9 +42,11 @@ label.place(x=530, y=0)
 ct_img = None
 
 # load model
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# net = resnet18(pretrained=False, b_RGB=False)
-net = torch.load('best_ckpt_cnn_60_0.959.pth')#,map_location=torch.device('cpu'))#.module.state_dict())
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+print(device)
+net = resnet18(pretrained=False, b_RGB=False)
+net.load_state_dict(torch.load('best_ckpt_cnn_33_0.7851.pth',map_location=torch.device(device)).module.state_dict())
+# net = torch.load('best_ckpt_cnn_60_0.959.pth',map_location=torch.device('cpu'))
 # print(net)
 net.to(device)
 net.eval()
@@ -86,35 +90,64 @@ def concatenate(list):
         head = np.concatenate((head, list[i]), 0)
 
     return np.array(head)
+
 """
-Use model to diagnose
+Downsample the image and unify the number of CT slices
 """
+def resize(img, stand_size, stand_slices):
+    # img = nd.rotate(img, 90, reshape=False) # unnecessary to rotate images
+    scale = float(stand_size / img.shape[0])
+    slices = img.shape[2]
+    if (stand_slices-slices)==1:
+        return nd.zoom(input = img[:,:,:slices-1], zoom=(scale, scale, 1), order=1)
+    # elif (slices-stand_slices)==1:
+    #     img = nd.zoom(input = img, zoom=(scale, scale, 1), order=1)
+    #     last = img[:,:,slices-1]
+    #     img.append(last)
+    #     return img
+    return nd.zoom(input = img, zoom=(scale, scale, float(stand_slices/slices)), order=1)
+
 def diagnose():
     global ct_img
-    clear()
+    ct_img = resize(ct_img,64,30)
+    # clear()
     slices = ct_img.shape[2]
     diag = np.zeros(4)
-    img_set = []
-    for i in range(10):
-        img_set.append(process_image(ct_img[i],128))
-    img_set = np.array(img_set).swapaxes(1,2)
-    # print(str(img_set.shape))
 
-    # np.random.shuffle(img_set)
-    img_set = img_set[:,np.newaxis].astype(np.float32)
+            # images = [[]]
+            # img_list = []
+            # for id in range(tmp.shape[2]):
+            #     # image size control
+            #     tmp_img = process_image(tmp[:, :, id], 64)
+            #     img_list.append(tmp_img)
+            # images[i].append(np.array(img_list))
+
+    img_list = []
+    images = [[]]
+    for i in range(slices):
+        img_list.append(process_image(ct_img[i],128))
+    images[0].append(np.array(img_list))#.swapaxes(1,2))
+
+    images[0] = concatenate(images[0])
+    np.random.shuffle(images[0])
+    print(len(images[0][1]))
+
+
+    img_set = images[0][:,np.newaxis].astype(np.float32)
     print("Shape of data: " + str(img_set.shape))
-    loader = torch.utils.data.DataLoader(img_set, batch_size=128)
+    loader = torch.utils.data.DataLoader(img_set, batch_size=4)
     output = []
     for i, (img_data) in enumerate(loader):
         img_data = img_data.to(device)
         res = net(img_data)
 
-        output.extend(res.cpu().detach().numpy())
+        output.extend(np.argmax(res.detach().cpu().numpy(), 1))
+        # all_preds =
 
-    output = torch.tensor(np.array(output))
+    # output = torch.tensor(np.array(output))
     print(output)
-    _, preds_tensor = torch.max(output, 1)
-    preds = np.squeeze(preds_tensor.numpy())
+    # _, preds_tensor = torch.max(output, 1)
+    preds = np.squeeze(output)
     for i in range(len(preds)):
         if preds[i] == 0:
             diag[0]+=1
@@ -124,6 +157,7 @@ def diagnose():
             diag[2]+=1
         elif preds[i] == 3:
             diag[3]+=1
+    print(diag)
     print(diag)
     if np.max(diag) == diag[0]:
         output_valueText.insert('end',"Normal lung tissue, no CT-signs of viral pneumonia (CT-0)")
