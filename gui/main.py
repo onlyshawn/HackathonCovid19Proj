@@ -47,7 +47,7 @@ root = tkinter.Tk()
 root.title('COVID-19 AI Diagnostic System')
 
 # window config
-root.geometry('800 x 600 + 100 + 50')  # width x height + widthoffset + heightoffset
+root.geometry('800x600+100+50')  # width x height + widthoffset + heightoffset
 root.configure(bg='white')
 root.resizable(False, False)
 root.focusmodel()
