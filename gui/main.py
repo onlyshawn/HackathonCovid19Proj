@@ -154,16 +154,11 @@ def diagnose():
     slices = ct_img.shape[2]
     img_list = []
     images = [[]]
-<<<<<<< HEAD:gui/main.py
+
     for i in range(image_slices):
         img_list.append(process_image(ct_img[:, :, i], image_size))
     images[0].append(np.array(img_list))
-=======
-    for i in range(slices):
-        img_list.append(process_image(ct_img[:, :, i],128))
-    images[0].append(np.array(img_list))#.swapaxes(1,2))
 
->>>>>>> 1a078bf29fc62916d17f2aed82656ee1a196b737:guitest/main.py
     images[0] = concatenate(images[0])
     np.random.shuffle(images[0])
     # print(len(images[0][1]))
