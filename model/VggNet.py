@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import numpy as np
+
 
 class VGG16(nn.Module):
     def __init__(self, nums = 4):
@@ -7,15 +9,15 @@ class VGG16(nn.Module):
         self.nums = nums
         vgg = []
 
-        # µÚÒ»¸ö¾í»ı²¿·Ö
+        # ç¬¬ä¸€ä¸ªå·ç§¯éƒ¨åˆ†
         # 112, 112, 64
-        vgg.append(nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, stride=1, padding=1))
+        vgg.append(nn.Conv2d(in_channels=1, out_channels=64, kernel_size=3, stride=1, padding=1))
         vgg.append(nn.ReLU())
         vgg.append(nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=1))
         vgg.append(nn.ReLU())
         vgg.append(nn.MaxPool2d(kernel_size=2, stride=2))
 
-        # µÚ¶ş¸ö¾í»ı²¿·Ö
+        # ç¬¬äºŒä¸ªå·ç§¯éƒ¨åˆ†
         # 56, 56, 128
         vgg.append(nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1))
         vgg.append(nn.ReLU())
@@ -23,7 +25,7 @@ class VGG16(nn.Module):
         vgg.append(nn.ReLU())
         vgg.append(nn.MaxPool2d(kernel_size=2, stride=2))
 
-        # µÚÈı¸ö¾í»ı²¿·Ö
+        # ç¬¬ä¸‰ä¸ªå·ç§¯éƒ¨åˆ†
         # 28, 28, 256
         vgg.append(nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1))
         vgg.append(nn.ReLU())
@@ -33,7 +35,7 @@ class VGG16(nn.Module):
         vgg.append(nn.ReLU())
         vgg.append(nn.MaxPool2d(kernel_size=2, stride=2))
 
-        # µÚËÄ¸ö¾í»ı²¿·Ö
+        # ç¬¬å››ä¸ªå·ç§¯éƒ¨åˆ†
         # 14, 14, 512
         vgg.append(nn.Conv2d(in_channels=256, out_channels=512, kernel_size=3, stride=1, padding=1))
         vgg.append(nn.ReLU())
@@ -43,7 +45,7 @@ class VGG16(nn.Module):
         vgg.append(nn.ReLU())
         vgg.append(nn.MaxPool2d(kernel_size=2, stride=2))
 
-        # µÚÎå¸ö¾í»ı²¿·Ö
+        # ç¬¬äº”ä¸ªå·ç§¯éƒ¨åˆ†
         # 7, 7, 512
         vgg.append(nn.Conv2d(in_channels=512, out_channels=512, kernel_size=3, stride=1, padding=1))
         vgg.append(nn.ReLU())
@@ -53,13 +55,13 @@ class VGG16(nn.Module):
         vgg.append(nn.ReLU())
         vgg.append(nn.MaxPool2d(kernel_size=2, stride=2))
 
-        # ½«Ã¿Ò»¸öÄ£¿é°´ÕÕËûÃÇµÄË³ĞòËÍÈëµ½nn.SequentialÖĞ,ÊäÈëÒªÃ´ÊÂorderdict,ÒªÃ´ÊÂÒ»ÏµÁĞµÄÄ£ĞÍ£¬Óöµ½ÉÏÊöµÄlist£¬±ØĞëÓÃ*ºÅ½øĞĞ×ª»¯
+        # å°†æ¯ä¸€ä¸ªæ¨¡å—æŒ‰ç…§ä»–ä»¬çš„é¡ºåºé€å…¥åˆ°nn.Sequentialä¸­,è¾“å…¥è¦ä¹ˆäº‹orderdict,è¦ä¹ˆäº‹ä¸€ç³»åˆ—çš„æ¨¡å‹ï¼Œé‡åˆ°ä¸Šè¿°çš„listï¼Œå¿…é¡»ç”¨*å·è¿›è¡Œè½¬åŒ–
         self.main = nn.Sequential(*vgg)
 
-        # È«Á¬½Ó²ã
+        # å…¨è¿æ¥å±‚
         classfication = []
-        # in_featuresËÄÎ¬ÕÅÁ¿±ä³É¶şÎ¬[batch_size,channels,width,height]±ä³É[batch_size,channels*width*height]
-        classfication.append(nn.Linear(in_features=512 * 7 * 7, out_features=4096))  # Êä³ö4096¸öÉñ¾­Ôª£¬²ÎÊı±ä³É512*7*7*4096+bias(4096)¸ö
+        # in_featureså››ç»´å¼ é‡å˜æˆäºŒç»´[batch_size,channels,width,height]å˜æˆ[batch_size,channels*width*height]
+        classfication.append(nn.Linear(in_features=512 * 7 * 7, out_features=4096))  # è¾“å‡º4096ä¸ªç¥ç»å…ƒï¼Œå‚æ•°å˜æˆ512*7*7*4096+bias(4096)ä¸ª
         classfication.append(nn.ReLU())
         classfication.append(nn.Dropout(p=0.5))
         classfication.append(nn.Linear(in_features=4096, out_features=4096))
@@ -70,7 +72,15 @@ class VGG16(nn.Module):
         self.classfication = nn.Sequential(*classfication)
 
     def forward(self, x):
-        feature = self.main(x)  # ÊäÈëÕÅÁ¿x
-        feature = feature.view(x.size(0), -1)  # reshape x±ä³É[batch_size,channels*width*height]
+        feature = self.main(x)  # è¾“å…¥å¼ é‡x
+        feature = feature.view(x.size(0), -1)  # reshape xå˜æˆ[batch_size,channels*width*height]
         result = self.classfication(feature)
         return result
+
+
+if __name__ == '__main__':
+    # input 224 224
+    model = VGG16();
+    x = torch.Tensor(np.zeros((128, 1, 224, 224)));
+    print(model(x).shape)
+
