@@ -3,3 +3,5 @@ checkpoint_Focal/
 checkpoint_LDAM/
 checkpoint_Normal/
 COVID19_1110/
+__pycache__/
+.idea/
