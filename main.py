@@ -259,7 +259,6 @@ if __name__ == '__main__':
     # Specify the used GPU
     # os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-    # 参数定义
     parser = argparse.ArgumentParser(description='Baseline model for COVID19')
     parser.add_argument('--model_arch', default="GoogleNet", type=str, help='the architecture of model')
     parser.add_argument('--loss_type', default="LDAM", type=str, help='loss type')

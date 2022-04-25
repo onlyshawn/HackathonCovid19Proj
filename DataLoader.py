@@ -3,10 +3,12 @@ import numpy as np
 import os
 import nibabel as nib
 import cv2
+import stand.standardization as sd
 
 nib.Nifti1Header.quaternion_threshold = - np.finfo(np.float32).eps * 10  # loose the limit
 training_data_path = "CT-0"
 preserving_ratio = 0.25 # filter out 2d images containing < 25% non-zeros
+standard_flag = True
 
 
 def getImage(src):
@@ -43,8 +45,11 @@ def loadRawData():
 
     for i in range(len(classNames)):
         for j in range(len(imageFiles[i])):
-            # too large, play a demo dataset first
+
             tmp = nib.load(imageFiles[i][j]).get_fdata()[:, :, :10]
+            # standardization
+            if standard_flag:
+                tmp = sd.standardization(imageFiles[i][j], 512, 10)
 
             layerNum[i].append(tmp.shape[2])
             img_list = []
