@@ -5,7 +5,6 @@ Our classifier is based on Hackathon covid 19 project. The aim is to develop a e
 ## Introduction
 This study seeks to apply data-quality control techniques and class-sensitive cost functions to enhance the performance of Covid 19 classifier over CT scans of varying serverity. Sliding window is introduced to optimize selection among a group of CT scans of an individual patient. And further DCGan is deployed to reconstruct CT scans. Considering extreme data imbalance of dataset, we maximize the margin among decision boundaries of different classes to boost the performance. We reach the highest MCC of 98% over test set and build up a easy-to-use GUI for future use.
 
-![image-20220417074742763](C:\Users\onlys\AppData\Roaming\Typora\typora-user-images\image-20220417074742763.png)
 
 ![img](https://lh4.googleusercontent.com/EpIfnvNmK4UT8y3Iy5-4lZ6BGAJMBanp1AQ3K-WOEOR1ASrTbFs0avVLwDnTjT60jF_mfE3hTJZsHpHGfy8WgDFcjt5lNcAZuofc_jaUI1Le7pneEg5nS7Kk29PGaxJNEQCXbognIFPE)
 

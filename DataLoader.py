@@ -4,7 +4,6 @@ import os
 import nibabel as nib
 import cv2
 import stand.standardization as sd
-
 nib.Nifti1Header.quaternion_threshold = - np.finfo(np.float32).eps * 10  # loose the limit
 training_data_path = "CT-0"
 preserving_ratio = 0.25 # filter out 2d images containing < 25% non-zeros
